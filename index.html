@@ -19,6 +19,11 @@
       --gold: #c99a43;
       --line: #d9d4c8;
       --shadow: 0 18px 54px rgba(23, 50, 77, .18);
+      --sidebar-normal-width: 410px;
+      --sidebar-index-width: 540px;
+      --sidebar-mobile-normal-height: 48vh;
+      --sidebar-mobile-index-height: 78vh;
+      --panel-motion: 220ms cubic-bezier(.2,.8,.2,1);
       --display: "Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif;
       --body: "Yu Gothic UI", "Hiragino Kaku Gothic ProN", "Noto Sans TC", sans-serif;
     }
@@ -32,19 +37,33 @@
     #map { position: absolute; inset: 0; background: #dbe3df; }
     .sidebar {
       position: absolute; z-index: 700; top: 16px; bottom: 16px; left: 16px;
-      display: flex; flex-direction: column; width: min(410px, calc(100vw - 32px));
+      display: flex; flex-direction: column; width: min(var(--sidebar-normal-width), calc(100vw - 32px));
       overflow: hidden; border: 1px solid rgba(23, 50, 77, .14); border-radius: 6px;
       background: rgba(247, 245, 239, .97); box-shadow: var(--shadow); backdrop-filter: blur(12px);
+      transform: translateX(0); transition: width var(--panel-motion), height var(--panel-motion), transform var(--panel-motion), opacity var(--panel-motion);
     }
     .sidebar::before {
       position: absolute; z-index: 2; top: 0; bottom: 0; left: 0; width: 5px;
       content: ""; background: linear-gradient(var(--vermilion) 0 50%, var(--forest) 50% 100%);
     }
     .masthead { padding: 21px 22px 16px 27px; border-bottom: 1px solid var(--line); }
+    .masthead-top { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+    .masthead-top > div { min-width: 0; }
+    .icon-control, #toggleIndexMode, .summary-toggle, #openSidebar {
+      min-width: 46px; min-height: 46px; border: 1px solid rgba(23,50,77,.28); border-radius: 4px;
+      color: var(--ink); background: var(--white); cursor: pointer; font-weight: 800;
+    }
+    .icon-control { display: grid; flex: 0 0 46px; padding: 0; place-items: center; }
+    .icon-control span { margin-top: -4px; font: 400 34px/1 var(--display); }
     .eyebrow { margin: 0 0 7px; color: var(--vermilion); font-size: 11px; font-weight: 800; letter-spacing: .19em; }
     h1 { margin: 0; font-family: var(--display); font-size: clamp(25px, 2.4vw, 32px); font-weight: 700; letter-spacing: .04em; line-height: 1.14; }
     .sub { max-width: 32em; margin: 9px 0 0; color: var(--ink-muted); font-size: 12px; line-height: 1.7; }
-    .control-zone { padding: 14px 18px 13px 23px; border-bottom: 1px solid var(--line); background: rgba(255, 254, 250, .72); }
+    .filter-summary-bar { display: none; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 16px 9px 22px; border-bottom: 1px solid var(--line); background: var(--paper-deep); }
+    .filter-summary-bar > div { min-width: 0; }
+    .summary-kicker { display: block; margin-bottom: 2px; color: var(--ink-muted); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+    #filterSummary { display: block; overflow: hidden; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .summary-toggle { flex: 0 0 auto; padding: 0 12px; font-size: 11px; }
+    .control-zone { max-height: 430px; padding: 14px 18px 13px 23px; overflow: hidden; border-bottom: 1px solid var(--line); background: rgba(255, 254, 250, .72); opacity: 1; transition: max-height var(--panel-motion), padding var(--panel-motion), opacity var(--panel-motion); }
     .section-title { margin: 0 0 9px; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     #datasetControls { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .dataset-toggle { position: relative; display: block; cursor: pointer; }
@@ -80,8 +99,10 @@
     }
     .rank-filters button.active { border-color: var(--vermilion); color: white; background: var(--vermilion); }
     .results { display: flex; flex: 1; min-height: 0; flex-direction: column; }
-    .result-head { display: flex; align-items: baseline; justify-content: space-between; padding: 11px 18px 9px 23px; border-bottom: 1px solid var(--line); }
+    .result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 55px; padding: 7px 12px 7px 23px; border-bottom: 1px solid var(--line); }
     .result-head h2 { margin: 0; font-size: 12px; letter-spacing: .1em; }
+    .result-actions { display: flex; align-items: center; gap: 9px; }
+    #toggleIndexMode { min-height: 46px; padding: 0 11px; font-size: 11px; }
     #resultSummary { color: var(--ink-muted); font-size: 11px; }
     .result-list { flex: 1; overflow: auto; padding: 8px 12px 14px 17px; scrollbar-color: #b8b2a4 transparent; scrollbar-width: thin; }
     .result-card {
@@ -119,11 +140,29 @@
     .legend-row { display: flex; gap: 6px; align-items: center; }
     .legend-swatch { width: 8px; height: 18px; border-radius: 6px; }
     .map-error { position: absolute; z-index: 650; top: 24px; right: 24px; max-width: 330px; padding: 12px 14px; border: 1px solid var(--vermilion); border-radius: 4px; background: var(--white); color: var(--ink); font-size: 12px; }
+    #openSidebar {
+      position: absolute; z-index: 710; top: 50%; left: 12px; display: flex; align-items: center; gap: 6px;
+      width: 48px; padding: 12px 0; opacity: 0; pointer-events: none; visibility: hidden; writing-mode: vertical-rl;
+      transform: translate(-16px, -50%); transition: opacity var(--panel-motion), transform var(--panel-motion), visibility var(--panel-motion);
+      box-shadow: 0 10px 28px rgba(23,50,77,.2);
+    }
+    #openSidebar span:first-child { font: 400 24px/1 var(--display); }
+    [data-sidebar-mode="collapsed"] .sidebar { opacity: 0; transform: translateX(calc(-100% - 28px)); }
+    [data-sidebar-mode="collapsed"] #openSidebar { opacity: 1; pointer-events: auto; visibility: visible; transform: translate(0, -50%); }
+    [data-sidebar-mode="index"] .sidebar { width: min(var(--sidebar-index-width), calc(100vw - 32px)); }
+    [data-sidebar-mode="index"] .masthead { padding: 13px 16px 11px 22px; }
+    [data-sidebar-mode="index"] .masthead .sub { display: none; }
+    [data-sidebar-mode="index"] .eyebrow { margin-bottom: 3px; }
+    [data-sidebar-mode="index"] h1 { font-size: 24px; }
+    [data-sidebar-mode="index"] .filter-summary-bar { display: flex; }
+    [data-sidebar-mode="index"][data-filters-expanded="false"] .control-zone { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0; }
+    [data-sidebar-mode="index"] .result-card { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(180px, .75fr); gap: 16px; align-items: center; }
+    [data-sidebar-mode="index"] .card-meta { margin: 0; text-align: right; }
     .leaflet-control-zoom { border: 0 !important; box-shadow: 0 5px 15px rgba(23,50,77,.18) !important; }
     .leaflet-control-zoom a { color: var(--ink) !important; background: var(--white) !important; }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
     @media (max-width: 820px) {
-      .sidebar { top: auto; right: 9px; bottom: 9px; left: 9px; width: auto; height: 48vh; min-height: 360px; border-radius: 7px; }
+      .sidebar { top: auto; right: 9px; bottom: 9px; left: 9px; width: auto; height: var(--sidebar-mobile-normal-height); min-height: 360px; border-radius: 7px; transform: translateY(0); }
       .leaflet-bottom { bottom: calc(48vh + 18px); }
       .masthead { padding: 14px 16px 10px 21px; }
       .eyebrow { margin-bottom: 3px; }
@@ -137,6 +176,14 @@
       .result-list { padding: 6px 8px 12px 13px; }
       .legend { display: none; }
       .map-error { top: 10px; right: 10px; left: 10px; max-width: none; }
+      #openSidebar { top: auto; bottom: 11px; left: 50%; width: auto; padding: 0 14px; opacity: 0; writing-mode: horizontal-tb; transform: translate(-50%, 18px); }
+      [data-sidebar-mode="collapsed"] .sidebar { opacity: 0; transform: translateY(calc(100% + 20px)); }
+      [data-sidebar-mode="collapsed"] #openSidebar { opacity: 1; transform: translate(-50%, 0); }
+      [data-sidebar-mode="collapsed"] .leaflet-bottom { bottom: 0; }
+      [data-sidebar-mode="index"] .sidebar { width: auto; height: var(--sidebar-mobile-index-height); min-height: 0; }
+      [data-sidebar-mode="index"] .leaflet-bottom { bottom: calc(78vh + 18px); }
+      [data-sidebar-mode="index"] .result-card { display: block; }
+      [data-sidebar-mode="index"] .card-meta { margin-top: 5px; text-align: left; }
     }
     @media (max-width: 440px) {
       #datasetControls { grid-template-columns: 1fr 1fr; }
@@ -149,14 +196,20 @@
   </style>
 </head>
 <body>
-  <main class="app" data-source-count="232">
+  <main class="app" data-source-count="232" data-sidebar-mode="normal" data-filters-expanded="true">
     <aside class="sidebar" aria-label="旅宿資料瀏覽器">
       <header class="masthead">
-        <p class="eyebrow">RYOKAN ATLAS · JAPAN</p>
-        <h1>日本旅宿精選地圖</h1>
+        <div class="masthead-top">
+          <div><p class="eyebrow">RYOKAN ATLAS · JAPAN</p><h1>日本旅宿精選地圖</h1></div>
+          <button id="collapseSidebar" class="icon-control" type="button" aria-label="收合側欄" title="收合側欄"><span aria-hidden="true">‹</span></button>
+        </div>
         <p class="sub">將旅館 100 選與日本秘湯協會會員旅館疊合在同一張地圖，從名單、地區與溫泉地交叉探索下一站。</p>
       </header>
-      <section class="control-zone">
+      <div class="filter-summary-bar">
+        <div><span class="summary-kicker">目前條件</span><strong id="filterSummary">兩組名單・全部地區</strong></div>
+        <button id="toggleFilters" class="summary-toggle" type="button" aria-expanded="false" aria-controls="controlZone">展開篩選</button>
+      </div>
+      <section id="controlZone" class="control-zone">
         <h2 id="datasetHeading" class="section-title">顯示名單</h2>
         <div id="datasetControls"></div>
         <p id="datasetNotice" class="notice" role="status" aria-live="polite"></p>
@@ -178,10 +231,11 @@
         </section>
       </section>
       <section class="results">
-        <div class="result-head"><h2>旅宿索引</h2><div id="resultSummary"></div></div>
+        <div class="result-head"><h2>旅宿索引</h2><div class="result-actions"><div id="resultSummary"></div><button id="toggleIndexMode" type="button">放大索引</button></div></div>
         <div id="list" class="result-list" aria-label="旅館清單"></div>
       </section>
     </aside>
+    <button id="openSidebar" type="button" aria-label="開啟旅宿索引" aria-hidden="true"><span aria-hidden="true">›</span><span>開啟旅宿索引</span></button>
     <div id="map" role="application" aria-label="日本旅宿地圖"></div>
     <div id="mapError" class="map-error" hidden>地圖資源目前無法載入，仍可使用清單瀏覽資料。</div>
   </main>
@@ -382,6 +436,28 @@ function datasetCounts(datasets, filteredRecords) {
   return counts;
 }
 
+function normalizeSidebarMode(mode) {
+  return ["normal", "collapsed", "index"].includes(mode) ? mode : "normal";
+}
+
+function buildFilterSummary(datasets, state) {
+  const enabled = datasets.filter(dataset => state.enabledDatasetIds.has(dataset.id));
+  const parts = [
+    enabled.length === datasets.length
+      ? "兩組名單"
+      : enabled.map(dataset => dataset.label).join("＋"),
+  ];
+  const query = String(state.query ?? "").trim();
+  if (query) parts.push(`搜尋「${query}」`);
+  if (state.region !== "all") parts.push(state.region);
+  if (state.prefecture !== "all" && state.prefecture !== state.region) parts.push(state.prefecture);
+  if (state.rankRange !== "all") {
+    parts.push({ top10: "前 10", top30: "前 30", top60: "前 60" }[state.rankRange]);
+  }
+  if (parts.length === 1) parts.push("全部地區");
+  return parts.filter(Boolean).join("・");
+}
+
 
     const datasetById = new Map(DATASETS.map(function(dataset) { return [dataset.id, dataset]; }));
     const state = {
@@ -389,6 +465,8 @@ function datasetCounts(datasets, filteredRecords) {
       query: "", region: "all", prefecture: "all", rankRange: "all",
     };
     const elements = {
+      app: document.querySelector(".app"),
+      sidebar: document.querySelector(".sidebar"),
       datasetControls: document.querySelector("#datasetControls"),
       datasetNotice: document.querySelector("#datasetNotice"),
       sourceCount: document.querySelector("#sourceCount"),
@@ -401,11 +479,51 @@ function datasetCounts(datasets, filteredRecords) {
       resultSummary: document.querySelector("#resultSummary"),
       list: document.querySelector("#list"),
       mapError: document.querySelector("#mapError"),
+      controlZone: document.querySelector("#controlZone"),
+      collapseSidebar: document.querySelector("#collapseSidebar"),
+      openSidebar: document.querySelector("#openSidebar"),
+      toggleIndexMode: document.querySelector("#toggleIndexMode"),
+      toggleFilters: document.querySelector("#toggleFilters"),
+      filterSummary: document.querySelector("#filterSummary"),
     };
     let map = null;
     let markerLayer = null;
     const markerByGroupId = new Map();
     let activeGroupId = "";
+    let sidebarMode = "normal";
+    let filtersExpanded = true;
+    let resizeTimer = 0;
+
+    function scheduleMapResize() {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(function() {
+        if (map) map.invalidateSize();
+      }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 240);
+    }
+
+    function setFiltersExpanded(expanded) {
+      filtersExpanded = sidebarMode === "normal" ? true : Boolean(expanded);
+      elements.controlZone.inert = !filtersExpanded;
+      elements.controlZone.setAttribute("aria-hidden", String(!filtersExpanded));
+      elements.toggleFilters.setAttribute("aria-expanded", String(filtersExpanded));
+      elements.toggleFilters.textContent = filtersExpanded ? "收合篩選" : "展開篩選";
+      elements.filterSummary.textContent = buildFilterSummary(DATASETS, state);
+      elements.app.dataset.filtersExpanded = String(filtersExpanded);
+      scheduleMapResize();
+    }
+
+    function setSidebarMode(requestedMode) {
+      sidebarMode = normalizeSidebarMode(requestedMode);
+      elements.app.dataset.sidebarMode = sidebarMode;
+      const isCollapsed = sidebarMode === "collapsed";
+      elements.sidebar.inert = isCollapsed;
+      elements.sidebar.setAttribute("aria-hidden", String(isCollapsed));
+      elements.openSidebar.setAttribute("aria-hidden", String(!isCollapsed));
+      elements.toggleIndexMode.textContent = sidebarMode === "index" ? "恢復一般" : "放大索引";
+      elements.toggleIndexMode.setAttribute("aria-pressed", String(sidebarMode === "index"));
+      setFiltersExpanded(sidebarMode === "normal");
+      scheduleMapResize();
+    }
 
     function safeUrl(value) {
       try {
@@ -576,6 +694,7 @@ function datasetCounts(datasets, filteredRecords) {
       elements.uniqueCount.textContent = groups.length;
       elements.visibleCount.textContent = records.length;
       elements.resultSummary.textContent = groups.length + " 間／" + records.length + " 筆";
+      elements.filterSummary.textContent = buildFilterSummary(DATASETS, state);
     }
 
     function initializeMap() {
@@ -604,9 +723,14 @@ function datasetCounts(datasets, filteredRecords) {
         render();
       });
     });
+    elements.collapseSidebar.addEventListener("click", function() { setSidebarMode("collapsed"); });
+    elements.openSidebar.addEventListener("click", function() { setSidebarMode("normal"); });
+    elements.toggleIndexMode.addEventListener("click", function() { setSidebarMode(sidebarMode === "index" ? "normal" : "index"); });
+    elements.toggleFilters.addEventListener("click", function() { setFiltersExpanded(!filtersExpanded); });
 
     initializeMap();
     updateSelectOptions();
+    setSidebarMode("normal");
     render();
   </script>
 </body>
